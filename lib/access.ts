@@ -1,0 +1,10 @@
+import {createHash,randomBytes} from 'node:crypto';
+import {rawDatabase} from './database';
+import {secureCookies} from './http';
+const COOKIE='nareal_admin';
+export type AdminSession={username:string,expiresAt:number};
+export function credentialVersion(){return createHash('sha256').update((process.env.ADMIN_USERNAME||'admin')+'\0'+(process.env.ADMIN_PASSWORD_HASH||'')).digest('hex');}
+export async function readSession(headers:Headers):Promise<AdminSession|null>{const token=headers.get('cookie')?.match(/(?:^|;\s*)nareal_admin=([a-f0-9]{64})(?:;|$)/)?.[1];if(!token||!process.env.ADMIN_PASSWORD_HASH)return null;const hash=createHash('sha256').update(token).digest('hex');const row=rawDatabase().prepare('SELECT username,expires_at AS expiresAt,credential_version FROM admin_sessions WHERE token_hash=?').get(hash);if(!row||Number(row.expiresAt)<=Date.now()||row.credential_version!==credentialVersion())return null;return {username:String(row.username),expiresAt:Number(row.expiresAt)};}
+export async function canEditWorkspace(headers:Headers){return Boolean(await readSession(headers));}
+export function createSession(username:string){const token=randomBytes(32).toString('hex');const hash=createHash('sha256').update(token).digest('hex');const expiresAt=Date.now()+8*60*60*1000;const db=rawDatabase();db.prepare('DELETE FROM admin_sessions WHERE expires_at<=?').run(Date.now());db.prepare('INSERT INTO admin_sessions(token_hash,username,expires_at,credential_version) VALUES (?,?,?,?)').run(hash,username,expiresAt,credentialVersion());return `${COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800${secureCookies()?'; Secure':''}`;}
+export function deleteSession(headers:Headers){const token=headers.get('cookie')?.match(/(?:^|;\s*)nareal_admin=([a-f0-9]{64})(?:;|$)/)?.[1];if(token)rawDatabase().prepare('DELETE FROM admin_sessions WHERE token_hash=?').run(createHash('sha256').update(token).digest('hex'));return `${COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secureCookies()?'; Secure':''}`;}

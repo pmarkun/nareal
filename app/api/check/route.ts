@@ -1,0 +1,7 @@
+import {canEditWorkspace} from '../../../lib/access';
+import {isSameOrigin} from '../../../lib/http';
+import {rawDatabase} from '../../../lib/database';
+import {initialState} from '../../../lib/data';
+import {checkText} from '../../../lib/checker';
+export const runtime='nodejs';
+export async function POST(req:Request){if(!await canEditWorkspace(req.headers))return Response.json({error:'Login necessário.'},{status:401});if(!isSameOrigin(req))return Response.json({error:'Origem não autorizada.'},{status:403});try{const raw=await req.text();if(raw.length>20000)return Response.json({error:'Trecho muito grande.'},{status:413});const body=JSON.parse(raw);if(typeof body.text!=='string'||!body.text.trim()||body.text.length>10000)return Response.json({error:'Trecho inválido.'},{status:400});const row=rawDatabase().prepare('SELECT payload FROM workspaces WHERE id=?').get('main');const state=row?JSON.parse(String(row.payload)):initialState;const result=await checkText(body.text,typeof body.context==='string'?body.context.slice(0,10000):body.text,state.sources);return Response.json(result,{headers:{'Cache-Control':'no-store'}});}catch(e){const unconfigured=e instanceof Error&&e.message==='MODEL_NOT_CONFIGURED';return Response.json({error:unconfigured?'Configure MODEL_BASE_URL e MODEL_NAME no Railway.':'O modelo não concluiu a checagem. O bloco continua disponível para revisão.'},{status:unconfigured?503:502});}}

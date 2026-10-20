@@ -1,0 +1,4 @@
+import {randomBytes,scrypt as nodeScrypt,timingSafeEqual} from 'node:crypto';
+function derive(password:string,salt:Buffer){return new Promise<Buffer>((resolve,reject)=>nodeScrypt(password,salt,64,{N:16384,r:8,p:1,maxmem:64*1024*1024},(error,result)=>error?reject(error):resolve(result)));}
+export async function hashPassword(password:string){if(password.length<12||password.length>1024)throw Error('Use uma senha entre 12 e 1024 caracteres.');const salt=randomBytes(16);const key=await derive(password,salt);return `scrypt$${salt.toString('hex')}$${key.toString('hex')}`;}
+export async function verifyPassword(password:string,encoded:string){const match=/^scrypt\$([a-f0-9]{32})\$([a-f0-9]{128})$/.exec(encoded);if(!match||password.length>1024)return false;const result=await derive(password,Buffer.from(match[1],'hex'));return timingSafeEqual(result,Buffer.from(match[2],'hex'));}

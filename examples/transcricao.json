@@ -1,0 +1,7 @@
+{
+  "segments": [
+    {"speaker": "Falante A", "start": 10, "end": 13, "text": "Este é um trecho fictício para testar a interface."},
+    {"speaker": "Falante A", "start": 13, "end": 17, "text": "A continuação será agrupada no mesmo bloco."},
+    {"speaker": "Falante B", "start": 17, "end": 22, "text": "Uma troca de falante inicia outro bloco selecionável."}
+  ]
+}
