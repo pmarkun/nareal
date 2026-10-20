@@ -86,7 +86,7 @@ function FactCard({claim,sources,onJump,canJump}:{claim:Claim,sources:Workspace[
  const reviewed=claim.status==='approved';
  return <article className={'fact-card fact-'+tone+(reviewed?'':' fact-preview')} aria-label={'Checagem: '+label+(reviewed?' · revisada':' · revisão pendente')}>
   <div className="fact-verdict"><strong>{label}</strong><span>{reviewed?'✓ Revisado':'Pré-análise · revisão pendente'}</span></div>
-  <div className="fact-body"><div className="fact-statement"><div className="fact-meta"><b>{claim.speaker}</b><time title="Momento da fala">{formatTime(claim.seconds)}</time></div><blockquote>“{claim.text}”</blockquote><button type="button" className="text-btn fact-jump" disabled={!canJump} onClick={onJump}>▶ Ouvir esta fala</button></div>
+  <div className="fact-body"><div className="fact-statement"><div className="fact-meta"><b>{claim.speaker}</b><time title="Momento da fala">{formatTime(claim.seconds)}</time></div><small className="fact-summary-label">Afirmação analisada · resumo do trecho</small><blockquote>{claim.text}</blockquote><button type="button" className="text-btn fact-jump" disabled={!canJump} onClick={onJump}>▶ Ouvir esta fala</button></div>
    <div className="fact-finding"><h3>{reviewed?'O que dizem os dados':'Análise preliminar'}</h3><p>{claim.explanation}</p><div className="fact-sources"><h3>Fontes</h3>{sources.length?sources.map(s=><a href={s.url} key={s.id} target="_blank" rel="noopener noreferrer"><b>{s.publisher} ↗</b><span>{s.title}</span><small>{s.period}</small></a>):<p>{claim.verdict==='Não verificável'?'Promessa, opinião ou fala sem verificação factual aplicável.':'Sem evidência suficiente para concluir.'}</p>}</div></div>
   </div>
  </article>;
