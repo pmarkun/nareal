@@ -4,6 +4,8 @@ import os
 import subprocess
 import threading
 import time
+import tempfile
+import re
 from adapters import Media, pcm_chunks
 
 
@@ -15,14 +17,15 @@ def run(transcriber):
     print(json.dumps({'event': 'obs_smoke_started'}), flush=True)
     producer = None
     reader = None
+    errors = tempfile.TemporaryFile()
     deadline = time.monotonic() + 50
     try:
         # Synthetic English speech tests transport/model execution, not Portuguese accuracy.
         producer = subprocess.Popen(['ffmpeg', '-nostdin', '-hide_banner', '-loglevel', 'error',
             '-re', '-f', 'lavfi', '-i', 'flite=text=This is a test of the live transcription system. The server receives audio and produces text.:voice=slt',
-            '-af', 'apad', '-t', '35', '-c:a', 'aac', '-f', 'flv', publish], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            '-af', 'apad', '-t', '35', '-c:a', 'aac', '-f', 'flv', publish], stdout=subprocess.DEVNULL, stderr=errors)
         time.sleep(2)
-        reader = pcm_chunks(Media(read, True), 0, 20, lambda: time.monotonic() > deadline)
+        reader = pcm_chunks(Media(read, True), 0, 20, lambda: time.monotonic() > deadline, diagnostics=lambda message: print(json.dumps({'event':'obs_decoder_diagnostic','message':message}),flush=True))
         pcm = next(reader)
         reader.close()
         print(json.dumps({'event':'obs_audio_received','audioSeconds':len(pcm)/32000}),flush=True)
@@ -30,7 +33,9 @@ def run(transcriber):
         print(json.dumps({'event': 'obs_smoke_passed', 'audioSeconds': len(pcm) / 32000,
                           'segments': len(segments), 'recognizedCharacters': sum(len(s['text']) for s in segments)}), flush=True)
     except Exception as error:
-        print(json.dumps({'event': 'obs_smoke_failed', 'type': type(error).__name__}), flush=True)
+        errors.seek(0)
+        message=re.sub(r'rtmps?://[^\s]+', '[RTMP]',errors.read(4000).decode('utf-8',errors='replace'))
+        print(json.dumps({'event': 'obs_smoke_failed', 'type': type(error).__name__, 'message':message}), flush=True)
     finally:
         if reader:
             reader.close()
@@ -41,3 +46,4 @@ def run(transcriber):
             except subprocess.TimeoutExpired:
                 producer.kill()
                 producer.wait()
+        errors.close()

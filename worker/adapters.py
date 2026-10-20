@@ -6,6 +6,7 @@ import re
 import subprocess
 import selectors
 import time
+import tempfile
 from typing import Iterator
 
 
@@ -117,7 +118,7 @@ def input_adapter(kind):
     return adapters[kind]()
 
 
-def pcm_chunks(media: Media, offset: float, chunk_seconds: int, cancelled) -> Iterator[bytes]:
+def pcm_chunks(media: Media, offset: float, chunk_seconds: int, cancelled, diagnostics=None) -> Iterator[bytes]:
     """One decoder shared by every adapter. Pipe backpressure bounds memory usage."""
     command = ['ffmpeg', '-nostdin', '-hide_banner', '-loglevel', 'error', '-rw_timeout', '20000000']
     if media.headers:
@@ -127,7 +128,8 @@ def pcm_chunks(media: Media, offset: float, chunk_seconds: int, cancelled) -> It
     if offset and not media.live:
         command += ['-ss', str(offset)]
     command += ['-i', media.url, '-vn', '-ac', '1', '-ar', '16000', '-f', 's16le', 'pipe:1']
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    error_file = tempfile.TemporaryFile() if diagnostics else None
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=error_file if error_file else subprocess.DEVNULL)
     selector = selectors.DefaultSelector()
     selector.register(process.stdout, selectors.EVENT_READ)
     buffer = bytearray()
@@ -146,6 +148,9 @@ def pcm_chunks(media: Media, offset: float, chunk_seconds: int, cancelled) -> It
                     yield bytes(buffer[:len(buffer) // 2 * 2])
                 process.wait(timeout=5)
                 if process.returncode != 0 or not received:
+                    if error_file:
+                        error_file.seek(0)
+                        diagnostics(re.sub(r'rtmps?://[^\s]+', '[RTMP]', error_file.read(4000).decode('utf-8', errors='replace')))
                     raise InputError('Não foi possível ler o áudio da transmissão.')
                 return
             received = True
@@ -165,3 +170,5 @@ def pcm_chunks(media: Media, offset: float, chunk_seconds: int, cancelled) -> It
                 process.kill()
                 process.wait()
         process.stdout.close()
+        if error_file:
+            error_file.close()
