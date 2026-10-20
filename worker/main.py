@@ -160,6 +160,9 @@ if __name__ == '__main__':
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, lambda *_: shutdown.set())
     threading.Thread(target=loop, daemon=True).start()
+    if os.environ.get('OBS_PROBE_PUBLISH_URL'):
+        from probe import run
+        threading.Thread(target=run, args=(model,), daemon=True).start()
     server = ThreadingHTTPServer(('0.0.0.0', int(os.environ.get('PORT', '8080'))), Health)
     server.timeout = 1
     while not shutdown.is_set():

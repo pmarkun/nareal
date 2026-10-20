@@ -6,6 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certi
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-COPY adapters.py transcriber.py main.py ./
+COPY adapters.py transcriber.py main.py probe.py ./
 EXPOSE 8080
 CMD ["python", "main.py"]
