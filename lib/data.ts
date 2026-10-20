@@ -1,5 +1,5 @@
 export type Source={id:string,title:string,publisher:string,url:string,topic:string,date:string,period:string,excerpt:string};
-export type Claim={id:string,videoId?:string,transcriptBlockId?:string,text:string,speaker:string,topic:string,time:string,seconds:number,status:'pending'|'approved'|'closed',verdict:string,explanation:string,sourceIds:string[],context:string,createdAt:number,demo:boolean,latency?:number,history:{at:string,action:string}[]};
+export type Claim={id:string,videoId?:string,transcriptBlockId?:string,text:string,speaker:string,topic:string,time:string,seconds:number,endSeconds?:number,publicPreview?:boolean,status:'pending'|'approved'|'closed',verdict:string,explanation:string,sourceIds:string[],context:string,createdAt:number,demo:boolean,latency?:number,history:{at:string,action:string}[]};
 export type Workspace={claims:Claim[],sources:Source[],videoUrl:string,title:string,videoMode?:'recorded'|'live'};
 export const verdicts=['Falso','Enganoso','Verdadeiro','Sem evidência','Não verificável'];
 export const seedSources:Source[]=[

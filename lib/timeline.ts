@@ -5,6 +5,16 @@ export function checksAt(claims:Claim[],videoId:string,seconds:number,live:boole
 // The offset belongs to this recording, never to unrelated videos or live inputs.
 export function videoStartSeconds(videoId:string){return videoId==='Gqc1rQtzWUk'?15661.52:0;}
 
+export function isPublicClaim(claim:Claim){return !claim.demo&&(claim.status==='approved'||claim.status==='pending'&&claim.publicPreview===true);}
+export function publicChecksAt(claims:Claim[],videoId:string,seconds:number,live=false){
+ return claims.filter(c=>isPublicClaim(c)&&c.videoId===videoId&&(live||c.seconds<=seconds)).sort((a,b)=>live?b.createdAt-a.createdAt:b.seconds-a.seconds||b.createdAt-a.createdAt);
+}
+export function currentPublicChecks(claims:Claim[],videoId:string,seconds:number){
+ const reached=publicChecksAt(claims,videoId,seconds);
+ const latest=reached[0]?.seconds??Infinity;
+ return reached.filter(c=>seconds<(c.endSeconds??Math.min(c.seconds+45,c.seconds<latest?latest:Infinity)));
+}
+
 type TimedBlock={id:string,start:number|null,end:number|null};
 // Private review includes drafts. Public visibility still requires editorial approval.
 export function reviewChecksForBlock(claims:Claim[],videoId:string,block:TimedBlock|null){

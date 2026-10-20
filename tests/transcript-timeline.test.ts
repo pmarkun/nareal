@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {transcriptAt,reviewChecksForBlock,videoStartSeconds} from '../lib/timeline.ts';
+import {transcriptAt,reviewChecksForBlock,videoStartSeconds,publicChecksAt,currentPublicChecks,isPublicClaim} from '../lib/timeline.ts';
 import type {Claim} from '../lib/data.ts';
 const blocks=[{id:'a',start:2.23,end:45.1},{id:'b',start:45.1,end:86.5},{id:'c',start:100,end:110},{id:'d',start:120,end:null},{id:'e',start:130,end:150}];
 test('video seeks forward and backward identify the matching transcript block',()=>{assert.equal(transcriptAt(blocks,46)?.id,'b');assert.equal(transcriptAt(blocks,101)?.id,'c');assert.equal(transcriptAt(blocks,4)?.id,'a');assert.equal(transcriptAt(blocks,130)?.id,'e');});
@@ -23,4 +23,21 @@ test('review follows the transcript in both directions, without leaking another 
  assert.deepEqual(matching(101),[]);
  assert.equal(videoStartSeconds('Gqc1rQtzWUk'),15661.52);
  assert.equal(videoStartSeconds('another-video'),0);
+});
+test('public playback exposes explicit previews, keeps private drafts hidden and follows seeks through gaps',()=>{
+ const claims=[
+  {id:'a',videoId:'video-one',seconds:10,endSeconds:20,status:'pending',publicPreview:true,createdAt:1,demo:false},
+  {id:'b',videoId:'video-one',seconds:30,endSeconds:40,status:'approved',createdAt:2,demo:false},
+  {id:'private',videoId:'video-one',seconds:10,status:'pending',createdAt:3,demo:false},
+  {id:'closed',videoId:'video-one',seconds:10,status:'closed',publicPreview:true,demo:false},
+  {id:'different',videoId:'video-two',seconds:10,status:'approved',createdAt:4,demo:false},
+ ] as Claim[];
+ assert.deepEqual(publicChecksAt(claims,'video-one',9),[]);
+ assert.deepEqual(publicChecksAt(claims,'video-one',35).map(c=>c.id),['b','a']);
+ assert.deepEqual(currentPublicChecks(claims,'video-one',12).map(c=>c.id),['a']);
+ assert.deepEqual(currentPublicChecks(claims,'video-one',25),[]);
+ assert.deepEqual(currentPublicChecks(claims,'video-one',35).map(c=>c.id),['b']);
+ assert.deepEqual(publicChecksAt(claims,'video-one',12).map(c=>c.id),['a']);
+ assert.equal(isPublicClaim(claims[2]),false);
+ assert.equal(isPublicClaim(claims[3]),false);
 });

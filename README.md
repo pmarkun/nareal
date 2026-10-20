@@ -40,13 +40,13 @@ Com `MODEL_BASE_URL` e `MODEL_NAME`, o servidor envia a fala e os trechos recupe
 
 ## Transcrição e revisão
 
-A página pública mostra apenas checagens aprovadas da transmissão configurada, com veredito, explicação e fontes. Os resultados aparecem automaticamente, sem depender do tempo de um player. O público acompanha o vídeo na TV ou na plataforma da emissora. O chat e o vídeo não aparecem na página pública.
+A página pública reúne o vídeo e a checagem do trecho em reprodução. Avançar ou voltar no vídeo muda a análise e o histórico de falas já alcançadas. A gravação do debate abre na primeira resposta, em 04:21:01.520. Em modo ao vivo, a página mostra as últimas análises disponibilizadas.
 
 Na aba **Transmissão**, a transcrição salva aparece ao lado do vídeo: clicar na fala posiciona o player; reproduzir ou buscar no player destaca e rola até o bloco correspondente, inclusive entre páginas. A busca filtra a transcrição completa. Rolar manualmente pausa o acompanhamento; use **Acompanhar vídeo** para retomá-lo. As caixas selecionam blocos para checagem e o tempo do vídeo é mantido ao trocar de aba.
 
 O painel de evidências acompanha o bloco em reprodução, incluindo rascunhos na administração. Avançar ou voltar no vídeo troca a análise; em trechos sem checagem, o painel informa a ausência. A lista lateral mostra até cinco checagens alcançadas e clicar em uma delas volta ao seu horário. O debate `Gqc1rQtzWUk` abre em **04:21:01.520**, na primeira resposta, e há um botão para retornar a esse ponto. Outros vídeos não recebem esse deslocamento.
 
-A API pública entrega apenas fontes vinculadas a checagens aprovadas e omite os resumos de trabalho da base, preservando as análises ainda em revisão.
+Rascunhos são privados por padrão. A opção **Exibir na visualização pública como pré-análise** permite mostrá-los com o aviso de revisão pendente, sem aprová-los editorialmente. Checagens aprovadas recebem o selo Revisado. A API pública remove histórico privado, contexto original e resumos da base; entrega apenas fontes vinculadas aos resultados visíveis. Respostas condicionais por revisão evitam retransmitir o conjunto sem alterações.
 
 Na aba **Transcrição**, importe JSON, SRT, VTT ou TXT. Cada troca de falante inicia um bloco. Segmentos adjacentes do mesmo falante são agrupados até aproximadamente 45 segundos/900 caracteres. Os horários ficam vinculados ao vídeo e o botão “Ouvir trecho” posiciona o player.
 

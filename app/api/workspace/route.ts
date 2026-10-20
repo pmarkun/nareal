@@ -4,11 +4,12 @@ import {youtubeId} from '../../../lib/core';
 import { initialState } from '../../../lib/data';
 import {canEditWorkspace} from '../../../lib/access';
 import {workspaceSchema} from '../../../lib/validation';
+import {isPublicClaim} from '../../../lib/timeline';
 export const runtime='nodejs';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control':'no-store' };
 export async function GET(req:Request){
- try { const row = await database().prepare('SELECT payload,revision FROM workspaces WHERE id = ?').bind('main').first<{payload:string,revision:number}>(); const canEdit=await canEditWorkspace(req.headers); const state=row?JSON.parse(row.payload):structuredClone(initialState); if(!state.videoUrl){state.videoUrl=initialState.videoUrl;state.title=initialState.title;state.videoMode='recorded';} if(!canEdit||new URL(req.url).searchParams.get('view')==='public'){state.claims=state.claims.filter((c:any)=>c.status==='approved'&&c.videoId===youtubeId(state.videoUrl)).map((c:any)=>({...c,history:[],context:c.text}));const sourceIds=new Set(state.claims.flatMap((c:any)=>c.sourceIds));state.sources=state.sources.filter((s:any)=>sourceIds.has(s.id)).map((s:any)=>({...s,excerpt:''}));} return Response.json({state,revision:row?.revision??0,canEdit,modelConfigured:Boolean(process.env.MODEL_BASE_URL&&process.env.MODEL_NAME)},{headers}); }
+ try { const row = await database().prepare('SELECT payload,revision FROM workspaces WHERE id = ?').bind('main').first<{payload:string,revision:number}>(); const canEdit=await canEditWorkspace(req.headers); const publicView=!canEdit||new URL(req.url).searchParams.get('view')==='public';const etag='"workspace-'+(publicView?'public':'admin')+'-'+(row?.revision??0)+'"';const responseHeaders={...headers,ETag:etag};if(req.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers:responseHeaders});const state=row?JSON.parse(row.payload):structuredClone(initialState); if(!state.videoUrl){state.videoUrl=initialState.videoUrl;state.title=initialState.title;state.videoMode='recorded';} if(publicView){state.claims=state.claims.filter((c:any)=>isPublicClaim(c)&&c.videoId===youtubeId(state.videoUrl)).map((c:any)=>({...c,history:[],context:c.text}));const sourceIds=new Set(state.claims.flatMap((c:any)=>c.sourceIds));state.sources=state.sources.filter((s:any)=>sourceIds.has(s.id)).map((s:any)=>({...s,excerpt:''}));} return Response.json({state,revision:row?.revision??0,canEdit,modelConfigured:Boolean(process.env.MODEL_BASE_URL&&process.env.MODEL_NAME)},{headers:responseHeaders}); }
  catch { return Response.json({error:'Não foi possível carregar os dados salvos. Tente novamente.'},{status:503,headers}); }
 }
 export async function POST(req:Request){
