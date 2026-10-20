@@ -1,6 +1,6 @@
 # Na Real
 
-Vídeo do YouTube, chat público e checagens com fontes, com revisão editorial e transcrição em blocos por falante. Aplicação Next.js/Node 24 pronta para Railway, independente do login e da infraestrutura do Sites.
+Página pública de checagens com fontes e revisão editorial. A administração reúne vídeo do YouTube e transcrição em blocos para selecionar as falas. Aplicação Next.js/Node 24 pronta para Railway, independente do login e da infraestrutura do Sites.
 
 ## Rodar localmente
 
@@ -39,6 +39,8 @@ As migrações SQL são aplicadas na primeira abertura do banco, durante a execu
 Com `MODEL_BASE_URL` e `MODEL_NAME`, o servidor envia a fala e os trechos recuperados da base ao endpoint configurado. Um Ollama privado acessível pela rede Railway pode ser usado com sua API `/v1`. Hospedar o modelo e dimensionar CPU/GPU é uma etapa separada; o Dockerfile deste repositório executa a aplicação web. Na ausência do modelo, os blocos selecionados entram na fila para revisão manual. A ponte Python opcional em `agent/` também permite Whisper e modelos na máquina do operador.
 
 ## Transcrição e revisão
+
+A página pública mostra apenas checagens aprovadas da transmissão configurada, com veredito, explicação e fontes. Os resultados aparecem automaticamente, sem depender do tempo de um player. O público acompanha o vídeo na TV ou na plataforma da emissora. O chat e o vídeo não aparecem na página pública.
 
 Na aba **Transmissão**, a transcrição salva aparece ao lado do vídeo: clicar na fala posiciona o player; reproduzir ou buscar no player destaca e rola até o bloco correspondente, inclusive entre páginas. A busca filtra a transcrição completa. Rolar manualmente pausa o acompanhamento; use **Acompanhar vídeo** para retomá-lo. As caixas selecionam blocos para checagem e o tempo do vídeo é mantido ao trocar de aba.
 
