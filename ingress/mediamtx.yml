@@ -8,8 +8,20 @@ srt: no
 api: no
 metrics: no
 pprof: no
-# MTX_AUTHINTERNALUSERS replaces this list with distinct publisher/reader secrets.
-authInternalUsers: []
+# Secrets override these fail-closed hashes through indexed environment variables.
+authInternalUsers:
+  - user: publisher
+    pass: sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    ips: []
+    permissions:
+      - action: publish
+        path: live
+  - user: reader
+    pass: sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    ips: []
+    permissions:
+      - action: read
+        path: live
 paths:
   live:
     source: publisher

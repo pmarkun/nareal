@@ -40,14 +40,12 @@ Worker:
 
 Recepção:
 
-`MTX_AUTHINTERNALUSERS` deve substituir a lista de usuários pelo JSON a seguir, com senhas reais no ambiente. Não use estes placeholders em produção:
+As permissões de `publisher` e `reader` ficam em `ingress/mediamtx.yml`. Configure as senhas por índice, conforme a configuração do MediaMTX:
 
-```json
-[
-  {"user":"publisher","pass":"SENHA-DE-PUBLICACAO","ips":[],"permissions":[{"action":"publish","path":"live"}]},
-  {"user":"reader","pass":"SENHA-DE-LEITURA","ips":[],"permissions":[{"action":"read","path":"live"}]}
-]
-```
+- `MTX_AUTHINTERNALUSERS_0_PASS`: senha de publicação.
+- `MTX_AUTHINTERNALUSERS_1_PASS`: senha de leitura.
+
+Não use JSON em `MTX_AUTHINTERNALUSERS`: esse formato não substitui a lista. Os hashes de bloqueio no arquivo não têm uma senha padrão conhecida; sem as variáveis, o acesso permanece bloqueado.
 
 A chave de publicação é retornada apenas para administradores autenticados. Não publique credenciais no repositório. RTMP pelo proxy TCP não tem TLS; para sinal confidencial, use um receptor RTMPS com certificado confiável ou outra entrada protegida, em um adaptador separado.
 
