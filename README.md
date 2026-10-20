@@ -40,6 +40,8 @@ Com `MODEL_BASE_URL` e `MODEL_NAME`, o servidor envia a fala e os trechos recupe
 
 ## Transcrição e revisão
 
+Na aba **Transmissão**, a transcrição salva aparece ao lado do vídeo: clicar na fala posiciona o player; reproduzir ou buscar no player destaca e rola até o bloco correspondente, inclusive entre páginas. A busca filtra a transcrição completa. Rolar manualmente pausa o acompanhamento; use **Acompanhar vídeo** para retomá-lo. As caixas selecionam blocos para checagem e o tempo do vídeo é mantido ao trocar de aba.
+
 Na aba **Transcrição**, importe JSON, SRT, VTT ou TXT. Cada troca de falante inicia um bloco. Segmentos adjacentes do mesmo falante são agrupados até aproximadamente 45 segundos/900 caracteres. Os horários ficam vinculados ao vídeo e o botão “Ouvir trecho” posiciona o player.
 
 - JSON: lista ou objeto com `segments`, cada item com `text`, `speaker`, `start` e `end` (tempos em segundos). Veja [examples/transcricao.json](examples/transcricao.json), que contém apenas falas fictícias.
