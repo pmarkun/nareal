@@ -58,11 +58,11 @@ try{
  const b=transcript.blocks[0];const claim={id:'integration-claim',transcriptBlockId:b.id,videoId,text:b.text,context:b.text,speaker:b.speaker,topic:'Teste',time:'00:00:10',seconds:10,status:'pending',verdict:'Sem evidência',explanation:'Checagem de teste, aguardando revisão humana.',sourceIds:[],createdAt:Date.now(),demo:false,history:[]};
  let state={...workspace.state,claims:[claim]};const save=await post('/api/workspace',{state,revision:workspace.revision,action:'teste'},cookie);assert.equal(save.status,200);let revision=(await save.json()).revision;
  assert.equal((await post('/api/workspace',{state,revision:0,action:'stale'},cookie)).status,409);
- assert.equal((await (await fetch(base+'/api/workspace')).json()).state.claims.length,0);
+ const draftOnlyPublic=await (await fetch(base+'/api/workspace')).json();assert.equal(draftOnlyPublic.state.claims.length,0);assert.equal(draftOnlyPublic.state.sources.length,0);
  state={...state,claims:[{...claim,status:'approved',verdict:'Verdadeiro'}]};assert.equal((await post('/api/workspace',{state,revision},cookie)).status,400);
  state={...state,claims:[{...claim,status:'approved',time:''}]};assert.equal((await post('/api/workspace',{state,revision},cookie)).status,400);
  state={...state,claims:[{...claim,status:'approved',verdict:'Verdadeiro',sourceIds:[state.sources[0].id]}]};const approved=await post('/api/workspace',{state,revision,action:'aprovar'},cookie);assert.equal(approved.status,200);
- const publicState=await (await fetch(base+'/api/workspace')).json();assert.equal(publicState.state.claims.length,1);assert.deepEqual(publicState.state.claims[0].history,[]);
+ const publicState=await (await fetch(base+'/api/workspace')).json();assert.equal(publicState.state.claims.length,1);assert.deepEqual(publicState.state.claims[0].history,[]);assert.deepEqual(publicState.state.sources.map(s=>s.id),[state.sources[0].id]);assert.equal(publicState.state.sources[0].excerpt,'');
  await stop();await start();const persisted=await (await fetch(base+'/api/transcript?videoId='+videoId,{headers:{Cookie:cookie}})).json();assert.equal(persisted.blocks.length,3);assert.ok(persisted.blocks.some(b=>b.speaker==='Revisor corrigiu'));assert.equal((await (await fetch(base+'/api/workspace')).json()).state.claims.length,1);
  assert.equal((await post('/api/auth/logout',{},cookie)).status,200);assert.equal((await fetch(base+'/api/transcript?videoId='+videoId,{headers:{Cookie:cookie}})).status,401);
  for(let i=0;i<5;i++)assert.equal((await post('/api/auth/login',{username:'reviewer',password:'wrong'})).status,401);assert.equal((await post('/api/auth/login',{username:'reviewer',password:'wrong'})).status,429);

@@ -44,6 +44,10 @@ A página pública mostra apenas checagens aprovadas da transmissão configurada
 
 Na aba **Transmissão**, a transcrição salva aparece ao lado do vídeo: clicar na fala posiciona o player; reproduzir ou buscar no player destaca e rola até o bloco correspondente, inclusive entre páginas. A busca filtra a transcrição completa. Rolar manualmente pausa o acompanhamento; use **Acompanhar vídeo** para retomá-lo. As caixas selecionam blocos para checagem e o tempo do vídeo é mantido ao trocar de aba.
 
+O painel de evidências acompanha o bloco em reprodução, incluindo rascunhos na administração. Avançar ou voltar no vídeo troca a análise; em trechos sem checagem, o painel informa a ausência. A lista lateral mostra até cinco checagens alcançadas e clicar em uma delas volta ao seu horário. O debate `Gqc1rQtzWUk` abre em **04:21:01.520**, na primeira resposta, e há um botão para retornar a esse ponto. Outros vídeos não recebem esse deslocamento.
+
+A API pública entrega apenas fontes vinculadas a checagens aprovadas e omite os resumos de trabalho da base, preservando as análises ainda em revisão.
+
 Na aba **Transcrição**, importe JSON, SRT, VTT ou TXT. Cada troca de falante inicia um bloco. Segmentos adjacentes do mesmo falante são agrupados até aproximadamente 45 segundos/900 caracteres. Os horários ficam vinculados ao vídeo e o botão “Ouvir trecho” posiciona o player.
 
 - JSON: lista ou objeto com `segments`, cada item com `text`, `speaker`, `start` e `end` (tempos em segundos). Veja [examples/transcricao.json](examples/transcricao.json), que contém apenas falas fictícias.
