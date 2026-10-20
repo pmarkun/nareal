@@ -12,6 +12,10 @@ class AdapterTests(unittest.TestCase):
         text = '00:01.000 --> 00:02.000\nSim\n\n00:03.000 --> 00:04.000\nSim'
         self.assertEqual(len(parse_vtt(text)), 2)
         self.assertEqual(parse_vtt(text)[0]['speaker'], 'Falante não identificado')
+    def test_adjacent_youtube_rolling_captions(self):
+        text = '00:00:01.000 --> 00:00:03.000\nUm dado importante\n\n00:00:03.000 --> 00:00:03.010\nUm dado importante\n\n00:00:03.010 --> 00:00:05.000\nUm dado importante\nsobre o Brasil'
+        segments = parse_vtt(text, rolling=True)
+        self.assertEqual([s['text'] for s in segments], ['Um dado importante', 'sobre o Brasil'])
     def test_adapters_are_independent_from_model(self):
         self.assertIsInstance(input_adapter('youtube'), YouTubeInput)
         self.assertIsInstance(input_adapter('obs'), OBSInput)

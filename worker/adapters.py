@@ -22,7 +22,7 @@ class Media:
     headers: dict | None = None
 
 
-def parse_vtt(content: str) -> list[dict]:
+def parse_vtt(content: str, rolling: bool = False) -> list[dict]:
     """Handle WebVTT rolling captions without repeating overlapping words."""
     def timestamp(value):
         parts = value.replace(',', '.').split(':')
@@ -39,7 +39,7 @@ def parse_vtt(content: str) -> list[dict]:
         text = html.unescape(re.sub(r'<[^>]+>', '', match[3]))
         words = text.split()
         fresh = words
-        if start < previous_end:
+        if start < previous_end or rolling and start <= previous_end + 0.05:
             for size in range(min(len(previous), len(words)), 0, -1):
                 if previous[-size:] == words[:size]:
                     fresh = words[size:]
@@ -68,7 +68,7 @@ class YouTubeInput:
         media = Media(info.get('url', ''), live, info.get('duration'), headers=info.get('http_headers', {}))
         # Live captions are not a complete resumable archive; transcribe the live audio.
         if not live:
-            for catalog in (info.get('subtitles', {}), info.get('automatic_captions', {})):
+            for catalog, rolling in ((info.get('subtitles', {}), False), (info.get('automatic_captions', {}), True)):
                 languages = sorted((k for k in catalog if re.fullmatch(r'pt(?:-[A-Za-z]+)?', k)), key=lambda x: x != 'pt')
                 for language in languages:
                     entry = next((e for e in catalog[language] if e.get('ext') == 'vtt'), None)
@@ -83,7 +83,7 @@ class YouTubeInput:
                                     data.extend(chunk)
                                     if len(data) > 8_000_000:
                                         raise ValueError('Caption too large')
-                        captions = parse_vtt(data.decode('utf-8'))
+                        captions = parse_vtt(data.decode('utf-8'), rolling=rolling)
                         if captions:
                             media.captions = captions
                             return media

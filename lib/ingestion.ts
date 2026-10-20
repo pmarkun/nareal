@@ -1,6 +1,6 @@
 import {randomBytes,timingSafeEqual} from 'node:crypto';
 import {rawDatabase} from './database';
-export type IngestJob={id:string,video_id:string,source:'youtube'|'obs',status:string,phase:string,start_seconds:number,cursor_seconds:number,duration_seconds:number|null,error:string,created_at:number,updated_at:number,lease_token?:string,lease_until?:number,attempts:number};
+export type IngestJob={id:string,video_id:string,source:'youtube'|'obs',status:string,phase:string,start_seconds:number,cursor_seconds:number,duration_seconds:number|null,error:string,created_at:number,updated_at:number,lease_token?:string,lease_until?:number,attempts:number,replace_job_id?:string|null};
 export function workerAuthorized(req:Request){const expected=process.env.INGEST_WORKER_TOKEN||'';const received=req.headers.get('authorization')?.replace(/^Bearer /,'')||'';const a=Buffer.from(received);const b=Buffer.from(expected);return expected.length>=32&&a.length===b.length&&timingSafeEqual(a,b);}
 export function publicJobs(videoId:string){return rawDatabase().prepare('SELECT id,video_id,source,status,phase,start_seconds,cursor_seconds,duration_seconds,error,created_at,updated_at,attempts FROM ingestion_jobs WHERE video_id=? ORDER BY created_at DESC LIMIT 10').all(videoId);}
 export function claimJob(){const db=rawDatabase();const now=Date.now();db.prepare('INSERT INTO ingestion_workers(id,last_seen) VALUES (?,?) ON CONFLICT(id) DO UPDATE SET last_seen=excluded.last_seen').run('main',now);db.exec('BEGIN IMMEDIATE');try{

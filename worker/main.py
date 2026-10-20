@@ -89,7 +89,7 @@ def process(job):
             session.phase('Importando legenda do YouTube')
             for i in range(0, len(captions), 100):
                 batch = captions[i:i + 100]
-                session.commit(batch, max(session.cursor, max(s['end'] for s in batch)), duration=media.duration)
+                session.commit(batch, max(session.cursor, max(s['end'] for s in batch)), duration=media.duration, replaceCaptions=bool(job.get('replace_job_id')))
             session.send(status='completed', phase='Legenda importada')
             return
         duration = None if media.live else media.duration

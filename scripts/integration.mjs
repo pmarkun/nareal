@@ -47,6 +47,14 @@ try{
  await stop();await start();const resumed=await (await fetch(base+'/api/ingest?videoId='+videoId,{headers:{Cookie:cookie}})).json();assert.equal(resumed.jobs[0].id,queuedId);assert.equal(resumed.jobs[0].cursor_seconds,8);
  assert.equal((await post('/api/ingest',{action:'stop',id:queuedId},cookie)).status,200);assert.equal((await worker({...batch,cursor:9})).status,409);
  const obs=await post('/api/ingest',{source:'obs',videoId},cookie);assert.equal(obs.status,201);const obsJob=(await (await worker({action:'claim'})).json()).job;assert.equal(obsJob.source,'obs');await post('/api/ingest',{action:'stop',id:obsJob.id},cookie);
+
+ // Reimporting rolling captions archives only generated, unreviewed blocks.
+ const captionVideo='testCAP0001';const oldJob=await (await post('/api/ingest',{source:'youtube',videoId:captionVideo},cookie)).json();const oldLease=(await (await worker({action:'claim'})).json()).job;
+ const oldBatch={id:oldLease.id,lease:oldLease.lease_token,cursor:10,status:'completed',segments:[{text:'Uma frase uma frase repetida.',speaker:'Falante não identificado',start:0,end:5},{text:'Trecho com falante corrigido.',speaker:'Nome corrigido',start:5,end:10}]};assert.equal((await worker(oldBatch)).status,200);
+ assert.equal((await post('/api/ingest',{source:'obs',videoId:captionVideo,replaceJobId:oldJob.id},cookie)).status,400);
+ const replacement=await post('/api/ingest',{source:'youtube',videoId:captionVideo,replaceJobId:oldJob.id},cookie);assert.equal(replacement.status,201);const newLease=(await (await worker({action:'claim'})).json()).job;assert.equal(newLease.replace_job_id,oldJob.id);
+ assert.equal((await worker({id:newLease.id,lease:newLease.lease_token,cursor:10,status:'completed',replaceCaptions:true,segments:[{text:'Uma frase sem repetição.',start:0,end:5}]})).status,200);
+ const clean=await (await fetch(base+'/api/transcript?videoId='+captionVideo,{headers:{Cookie:cookie}})).json();assert.equal(clean.blocks.length,2);assert.ok(clean.blocks.some(b=>b.speaker==='Nome corrigido'));assert.ok(!clean.blocks.some(b=>b.text.includes('uma frase repetida')));
  const b=transcript.blocks[0];const claim={id:'integration-claim',transcriptBlockId:b.id,videoId,text:b.text,context:b.text,speaker:b.speaker,topic:'Teste',time:'00:00:10',seconds:10,status:'pending',verdict:'Sem evidência',explanation:'Checagem de teste, aguardando revisão humana.',sourceIds:[],createdAt:Date.now(),demo:false,history:[]};
  let state={...workspace.state,claims:[claim]};const save=await post('/api/workspace',{state,revision:workspace.revision,action:'teste'},cookie);assert.equal(save.status,200);let revision=(await save.json()).revision;
  assert.equal((await post('/api/workspace',{state,revision:0,action:'stale'},cookie)).status,409);

@@ -12,6 +12,7 @@ def run(transcriber):
     read = os.environ.get('OBS_STREAM_URL', '')
     if not publish or not read:
         return
+    print(json.dumps({'event': 'obs_smoke_started'}), flush=True)
     producer = None
     reader = None
     deadline = time.monotonic() + 50
@@ -24,7 +25,8 @@ def run(transcriber):
         reader = pcm_chunks(Media(read, True), 0, 20, lambda: time.monotonic() > deadline)
         pcm = next(reader)
         reader.close()
-        segments = transcriber.transcribe(pcm, 0, lambda _: None)
+        print(json.dumps({'event':'obs_audio_received','audioSeconds':len(pcm)/32000}),flush=True)
+        segments = transcriber.transcribe(pcm, 0, lambda phase: print(json.dumps({'event':'obs_smoke_phase','phase':phase}),flush=True))
         print(json.dumps({'event': 'obs_smoke_passed', 'audioSeconds': len(pcm) / 32000,
                           'segments': len(segments), 'recognizedCharacters': sum(len(s['text']) for s in segments)}), flush=True)
     except Exception as error:
