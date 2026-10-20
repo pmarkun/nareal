@@ -16,7 +16,7 @@ Abra http://localhost:3000. A administração fica em `/admin`, com usuário con
 
 ## Railway
 
-1. Crie um serviço a partir deste repositório, branch `main`. O `railway.json` seleciona o `Dockerfile` e configura a verificação em `/api/health`.
+1. Crie um serviço a partir deste repositório, branch `main`. Use o `Dockerfile` da raiz e configure o healthcheck em `/api/health`. Veja a configuração dos serviços em [docs/transcricao.md](docs/transcricao.md).
 2. Adicione um **volume persistente montado em `/data`**. Mantenha **uma réplica**: este projeto usa um único SQLite, com WAL e transações. Não habilite réplicas ou regiões adicionais para o mesmo banco.
 3. Configure as variáveis abaixo. Gere seu hash localmente com `npm run password:hash` e cole o valor completo, sem aspas adicionais no painel de variáveis do Railway. Não coloque senha, hash real ou chaves no GitHub.
 4. Gere o domínio público do serviço, configure `APP_URL` com a URL HTTPS exata (sem caminho) e faça o deploy. `PORT` é fornecida pelo Railway. O processo escuta em `0.0.0.0`.
@@ -48,7 +48,7 @@ Na aba **Transcrição**, importe JSON, SRT, VTT ou TXT. Cada troca de falante i
 - Selecione até 20 blocos e clique em **Checar**. Cada bloco gera uma entrada pendente, sem duplicação. O modelo sugere uma análise se estiver conectado; o revisor corrige, vincula fontes e aprova ou encerra.
 - Só checagens aprovadas aparecem publicamente. Em gravações, aparecem conforme o tempo do player. Aprovar exige horário válido e, para vereditos factuais, fonte vinculada.
 
-A extração automática de legendas do YouTube não está implementada nesta versão. A tentativa pelo extrator não oficial no ambiente de nuvem foi bloqueada pelo YouTube. Não há transcrição real pré-carregada do debate. Importe uma transcrição disponível ou use a captura de áudio pela ponte local. A captura salva as janelas transcritas na aba Transcrição para seleção; para identificar os falantes, importe uma transcrição já identificada ou ajuste os rótulos manualmente.
+A aba Transcrição também oferece processamento no Railway: YouTube (legenda em português ou áudio via yt-dlp + Whisper) e OBS (entrada RTMP autenticada). Os blocos chegam progressivamente e o processamento continua com a aba fechada. Veja [operação, arquitetura e limites](docs/transcricao.md). A ponte local continua opcional. Sem metadados de voz, ajuste os falantes manualmente; não há diarização automática.
 
 ## Fontes e limites
 
