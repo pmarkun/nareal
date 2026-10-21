@@ -28,6 +28,8 @@ Windows: `powershell -File obs/start.ps1` inicia o serviço; o plugin precisa se
 
 ## Configurar o OBS
 
+Se você baixou o artefato **nareal-obs-linux-x86_64** no GitHub Actions, extraia a pasta e execute `bash install-linux.sh` nela. Esse caminho usa a biblioteca já compilada; depois copie `env.example` para `.env`, configure a chave e execute `bash start.sh`.
+
 1. Reinicie o OBS. Abra **Painéis → Na Real**.
 2. Escolha a fonte de áudio do debate. Clique **Atualizar fontes** se ela foi criada recentemente. Não use áudio geral do desktop se ele também contém microfone, notificações ou retorno da transmissão.
 3. Mantenha a porta `8766` e cole **somente a chave** exibida após `#token=` no terminal. Ela não é salva pelo plugin. A fonte precisa produzir áudio; fontes mutadas enviam silêncio.

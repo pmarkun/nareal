@@ -4,6 +4,7 @@ const fragment = new URLSearchParams(location.hash.slice(1)).get('token');
 let token = fragment || sessionStorage.getItem('nareal-obs-token') || '';
 if (fragment) history.replaceState(null, '', '/');
 let state, selected = '', editingVersion = 0, dirty = false, busy = false, lastRevision = -1;
+let refreshing = false;
 const notice = message => { $('notice').textContent = message; };
 const node = (tag, text, cls) => { const n = document.createElement(tag); if (text) n.textContent = text; if (cls) n.className = cls; return n; };
 const clock = ms => new Date(ms).toISOString().slice(11, 19);
@@ -63,7 +64,8 @@ function renderList() {
 }
 
 async function refresh() {
-  if (!token) return;
+  if (!token || refreshing) return;
+  refreshing = true;
   try {
     state = await api('/api/state'); sessionStorage.setItem('nareal-obs-token', token);
     $('login').hidden = true; $('workspace').hidden = false;
@@ -80,6 +82,7 @@ async function refresh() {
       renderList(); lastRevision = state.revision;
     }
   } catch (error) { notice(error.message); $('connection').textContent = 'Serviço desconectado'; }
+  finally { refreshing = false; }
 }
 
 async function run(operation) {

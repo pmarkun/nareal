@@ -129,7 +129,7 @@ class Runtime:
     def enqueue(self, item):
         if item.get('phase') == 'checking':
             raise Conflict('Esta fala já está sendo checada.')
-        key = fingerprint(item['text'])
+        key = fingerprint(item['text'] + '\n' + item['context'])
         cached = self.seen.get(key)
         # Reuse evidence for exact repeats for ten minutes; retain independent review.
         if cached and time.time() - cached[0] < 600:
@@ -168,7 +168,7 @@ class Runtime:
                         continue
                     item.update(result, phase='ready', error='', latency_ms=round((time.monotonic() - before) * 1000))
                     self.store.save(item, 'checked', expected=version)
-                    self.seen[fingerprint(item['text'])] = (time.time(), result)
+                    self.seen[fingerprint(item['text'] + '\n' + item['context'])] = (time.time(), result)
                     if len(self.seen) > 500:
                         self.seen.pop(next(iter(self.seen)))
                     self.maybe_publish(item)

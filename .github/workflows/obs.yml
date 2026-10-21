@@ -19,6 +19,24 @@ jobs:
           cache-dependency-path: obs/requirements-dev.txt
       - run: pip install -r obs/requirements-dev.txt
       - run: PYTHONPATH=obs python -m pytest -q obs/tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install browser for isolated UI tests
+        run: |
+          npm install --prefix /tmp/nareal-browser playwright
+          /tmp/nareal-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Review panel and overlay browser test
+        run: |
+          PYTHONPATH=obs python obs/tests/serve_fixture.py > /tmp/nareal-fixture.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8766/health && break || sleep 1; done
+          PLAYWRIGHT_MODULE=/tmp/nareal-browser/node_modules/playwright/index.mjs node obs/tests/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nareal-obs-interface-qa
+          path: /tmp/nareal-qa/
+          retention-days: 30
   linux:
     runs-on: ubuntu-24.04
     steps:
@@ -31,7 +49,7 @@ jobs:
           mkdir -p /tmp/nareal-package/nareal-obs/bin/64bit
           cp /tmp/nareal-build/nareal-obs.so /tmp/nareal-package/nareal-obs/bin/64bit/
           cp -r obs/service /tmp/nareal-package/service
-          cp obs/requirements.txt obs/env.example obs/start.sh obs/README.md /tmp/nareal-package/
+          cp obs/requirements.txt obs/env.example obs/start.sh obs/install-linux.sh obs/README.md /tmp/nareal-package/
       - uses: actions/upload-artifact@v4
         with:
           name: nareal-obs-linux-x86_64
