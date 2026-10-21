@@ -1,5 +1,7 @@
 # Na Real
 
+**Plugin para OBS Studio:** captura de fonte de áudio, transcrição local, checagem modular e overlay com revisão em [obs/README.md](obs/README.md). O serviço roda na máquina do operador, independente do Railway.
+
 Página pública de checagens com fontes e revisão editorial. A administração reúne vídeo do YouTube e transcrição em blocos para selecionar as falas. Aplicação Next.js/Node 24 pronta para Railway, independente do login e da infraestrutura do Sites.
 
 ## Rodar localmente

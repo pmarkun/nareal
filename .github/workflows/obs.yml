@@ -1,0 +1,39 @@
+name: OBS plugin
+on:
+  push:
+    paths: ['obs/**', '.github/workflows/obs.yml']
+  pull_request:
+    paths: ['obs/**', '.github/workflows/obs.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  service:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: obs/requirements-dev.txt
+      - run: pip install -r obs/requirements-dev.txt
+      - run: PYTHONPATH=obs python -m pytest -q obs/tests
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build libobs-dev obs-studio qt6-base-dev libgl-dev
+      - run: cmake -S obs/plugin -B /tmp/nareal-build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build /tmp/nareal-build --parallel 2
+      - name: Package Linux plugin and local service
+        run: |
+          mkdir -p /tmp/nareal-package/nareal-obs/bin/64bit
+          cp /tmp/nareal-build/nareal-obs.so /tmp/nareal-package/nareal-obs/bin/64bit/
+          cp -r obs/service /tmp/nareal-package/service
+          cp obs/requirements.txt obs/env.example obs/start.sh obs/README.md /tmp/nareal-package/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nareal-obs-linux-x86_64
+          path: /tmp/nareal-package/
+          retention-days: 30

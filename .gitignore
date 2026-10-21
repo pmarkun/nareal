@@ -8,3 +8,6 @@ data/
 __pycache__/
 *.pyc
 .DS_Store
+obs/.venv/
+obs/build/
+.pytest_cache/
