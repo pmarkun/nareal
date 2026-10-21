@@ -24,8 +24,9 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
-#include <mutex>
+#include <memory>
 #include <vector>
+#include "audio-ring.hpp"
 
 OBS_DECLARE_MODULE()
 MODULE_EXPORT const char *obs_module_description(void)
@@ -46,13 +47,10 @@ class CaptureDock final : public QWidget {
     QTimer timer;
     obs_source_t *source = nullptr;
     audio_resampler_t *resampler = nullptr;
-    std::mutex mutex;
-    std::vector<float> buffer;
+    std::unique_ptr<AudioRing> ring;
     std::atomic<bool> overflow{false};
     uint32_t sampleRate = 48000;
     size_t channels = 2;
-    std::atomic<uint64_t> totalFrames{0};
-    uint64_t bufferStart = 0;
     int sequence = 0;
     QString session;
     bool inFlight = false, starting = false, stopping = false;
@@ -79,18 +77,7 @@ class CaptureDock final : public QWidget {
     static void capture(void *data, obs_source_t *, const audio_data *audio, bool muted)
     {
         auto *self = static_cast<CaptureDock *>(data);
-        std::unique_lock<std::mutex> lock(self->mutex, std::try_to_lock);
-        if (!lock.owns_lock()) {
-            self->overflow.store(true);
-            return;
-        }
-        if (self->buffer.size() + audio->frames > self->sampleRate * 3) {
-            self->overflow.store(true);
-            return;
-        }
-        if (self->buffer.empty())
-            self->bufferStart = self->totalFrames;
-        for (uint32_t frame = 0; frame < audio->frames; ++frame) {
+        const bool copied = self->ring->write(audio->frames, [self, audio, muted](size_t frame) {
             float mono = 0;
             if (!muted) {
                 for (size_t channel = 0; channel < self->channels; ++channel) {
@@ -99,9 +86,10 @@ class CaptureDock final : public QWidget {
                 }
                 mono /= float(self->channels);
             }
-            self->buffer.push_back(std::isfinite(mono) ? std::clamp(mono, -1.0f, 1.0f) : 0.0f);
-        }
-        self->totalFrames += audio->frames;
+            return std::isfinite(mono) ? std::clamp(mono, -1.0f, 1.0f) : 0.0f;
+        });
+        if (!copied)
+            self->overflow.store(true);
     }
 
     void controls(bool running)
@@ -129,8 +117,7 @@ class CaptureDock final : public QWidget {
             audio_resampler_destroy(resampler);
             resampler = nullptr;
         }
-        std::lock_guard<std::mutex> lock(mutex);
-        buffer.clear();
+        ring.reset();
         overflow.store(false);
     }
 
@@ -138,7 +125,7 @@ class CaptureDock final : public QWidget {
     {
         if (inFlight || session.isEmpty())
             return;
-        if (!buffer.empty()) {
+        if (ring && ring->available()) {
             pump(true);
             return;
         }
@@ -146,6 +133,7 @@ class CaptureDock final : public QWidget {
             audio_resampler_destroy(resampler);
             resampler = nullptr;
         }
+        ring.reset();
         auto ident = session;
         session.clear();
         auto *reply = network.post(request("/api/session/" + ident + "/stop"), "{}");
@@ -167,19 +155,10 @@ class CaptureDock final : public QWidget {
             stop("Captura interrompida: perda de áudio ou fonte removida. Aguarde e reinicie.", true);
             return;
         }
-        std::vector<float> audio;
-        uint64_t start;
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            if (buffer.empty() || (!final && buffer.size() < sampleRate / 2))
-                return;
-            // Send at most one second. Remaining samples keep their original clock.
-            const size_t count = std::min(buffer.size(), size_t(sampleRate));
-            audio.assign(buffer.begin(), buffer.begin() + count);
-            buffer.erase(buffer.begin(), buffer.begin() + count);
-            start = bufferStart;
-            bufferStart += count;
-        }
+        if (!ring || !ring->available() || (!final && ring->available() < sampleRate / 2))
+            return;
+        const uint64_t start = ring->readCount();
+        auto audio = ring->take(sampleRate);
         uint8_t *output[MAX_AV_PLANES] = {};
         const uint8_t *input[MAX_AV_PLANES] = {};
         input[0] = reinterpret_cast<const uint8_t *>(audio.data());
@@ -189,8 +168,11 @@ class CaptureDock final : public QWidget {
             stop("Não foi possível converter o áudio para 16 kHz.");
             return;
         }
-        if (!frames)
+        if (!frames) {
+            if (final)
+                finishStop();
             return;
+        }
         auto req = request("/api/audio", "application/octet-stream");
         req.setRawHeader("X-Session", session.toUtf8());
         req.setRawHeader("X-Sequence", QByteArray::number(sequence++));
@@ -207,7 +189,7 @@ class CaptureDock final : public QWidget {
                 toggle->setEnabled(false);
                 status->setText(message + " A captura foi interrompida.");
             } else if (!stopping) {
-                status->setText("Áudio enviado localmente · " + QString::number(totalFrames.load() / sampleRate) + "s. Revise no painel.");
+                status->setText("Áudio enviado localmente · " + QString::number(ring ? ring->writeCount() / sampleRate : 0) + "s. Revise no painel.");
             }
             reply->deleteLater();
             if (stopping)
@@ -260,9 +242,7 @@ class CaptureDock final : public QWidget {
                 stop("Formato de áudio não suportado.");
                 return;
             }
-            buffer.reserve(sampleRate * 3);
-            totalFrames.store(0);
-            bufferStart = 0;
+            ring = std::make_unique<AudioRing>(sampleRate * 3);
             sequence = 0;
             overflow.store(false);
             obs_source_add_audio_capture_callback(source, capture, this);

@@ -51,7 +51,7 @@ function showRecord(item) {
 }
 
 function renderList() {
-  $('count').textContent = state.records.length + ' blocos recentes';
+  $('count').textContent = state.records.length + (state.records.length === 1 ? ' bloco recente' : ' blocos recentes');
   const list = $('records'); list.replaceChildren();
   if (!state.records.length) list.append(node('p', 'Nenhuma fala capturada ainda.', 'empty-list'));
   for (const item of state.records) {

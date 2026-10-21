@@ -44,6 +44,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build libobs-dev obs-studio qt6-base-dev libgl-dev
       - run: cmake -S obs/plugin -B /tmp/nareal-build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build /tmp/nareal-build --parallel 2
+      - run: ctest --test-dir /tmp/nareal-build --output-on-failure
       - name: Package Linux plugin and local service
         run: |
           mkdir -p /tmp/nareal-package/nareal-obs/bin/64bit

@@ -29,7 +29,8 @@ try {
   await overlay.getByRole('heading', {name: 'Resumo corrigido no teste de interface'}).waitFor();
   assert.equal(await overlay.getByText('Revisado pela redação', {exact: true}).isVisible(), true);
   assert.equal(await overlay.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
-  await overlay.screenshot({path: directory + '/overlay-1920.png', omitBackground: true});
+  assert.equal(await overlay.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), 'rgba(0, 0, 0, 0)');
+  await overlay.screenshot({path: directory + '/overlay-1920.png', omitBackground: true, animations: 'disabled'});
   await page.getByRole('button', {name: 'Retirar todas as tarjas'}).click();
   await overlay.locator('#card').waitFor({state: 'hidden'});
   await page.setViewportSize({width: 390, height: 844});

@@ -89,4 +89,8 @@ cmake --build build --parallel 2
 
 Testes com transcritor/IA injetados e simulados, sem credenciais nem chamadas pagas: fluxo áudio→bloco→revisão→overlay, retirada ao editar, conflitos, fontes inválidas, duplicação, persistência, automático e contrato HTTP do Gemini. Não substituem ensaio com OBS e áudio reais. O workflow **OBS plugin** compila Linux e gera artefato de instalação.
 
+O teste nativo transfere um milhão de amostras entre duas threads para verificar ordem e reutilização do buffer circular sem bloquear a thread de áudio. O teste de navegador cobre login local, seleção, edição, aprovação, exibição e retirada, transparência de HTML/body, console sem erros e ausência de rolagem horizontal em 1440px/390px. As capturas de tela usam dados explicitamente fictícios.
+
+Em um ensaio local de 21/10/2026, Whisper **small**, CPU/int8, transcreveu corretamente uma fala sintetizada em português de 9,62s em aproximadamente 1,79s, após o carregamento. Esse resultado mede apenas ASR nesse ambiente, sem pesquisa web, revisão, múltiplos falantes ou ruído de debate. O modelo `tiny` errou palavras do mesmo exemplo e não é o padrão recomendado aqui. A chamada real do Gemini depende de chave do operador e ainda precisa de ensaio completo antes da transmissão.
+
 Referências: [captura de áudio](https://docs.obsproject.com/reference-sources#c.obs_source_add_audio_capture_callback), [painel OBS](https://docs.obsproject.com/reference-frontend-api#c.obs_frontend_add_dock_by_id), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [JSON Gemini](https://ai.google.dev/gemini-api/docs/generate-content/structured-output), [busca Gemini](https://ai.google.dev/gemini-api/docs/generate-content/google-search).
